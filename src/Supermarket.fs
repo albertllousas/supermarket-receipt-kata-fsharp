@@ -4,6 +4,8 @@ type Product = { key: string }
 
 type ShoppingCart = { products: Product list }
 
+let prices = Map.ofList [ ("toothpaste", 0.69); ("toothbrush", 0.99) ]
+
 module Supermarket =
     
-    let total (cart: ShoppingCart) = if cart.products = [] then 0.0 else 0.99
+    let total (cart: ShoppingCart) = cart.products |> List.sumBy (fun product -> prices.[product.key])

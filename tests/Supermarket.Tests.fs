@@ -17,4 +17,9 @@ let tests = testList "Supermarket tests" [
     let shoppingCart = { products = [ { key = "toothbrush" } ]}
     assertThat (Supermarket.total shoppingCart ) 0.99  
   }
+  
+  test "Should calculate the total of a shopping cart with some products" {
+    let shoppingCart = { products = [ { key = "toothbrush" }; { key = "toothpaste" } ]}
+    assertThat (Supermarket.total shoppingCart ) 1.68 
+  }
 ]
