@@ -6,4 +6,4 @@ type ShoppingCart = { products: Product list }
 
 module Supermarket =
     
-    let total (_: ShoppingCart) = 0.0
+    let total (cart: ShoppingCart) = if cart.products = [] then 0.0 else 0.99
