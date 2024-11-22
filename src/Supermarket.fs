@@ -2,11 +2,11 @@ module Supermarket
 
 open FSharpx
 
-type Product = { key: string }
+type CartItem = { productKey: string; quantity: float }
+
+type ShoppingCart = { items: CartItem list }
 
 type UnknownProduct = UnknownProduct of string
-
-type ShoppingCart = { products: Product list }
 
 type Catalog = { prices: Map<string, float> }
 
@@ -18,7 +18,9 @@ module Catalog =
 module Supermarket =
 
   let total (cart: ShoppingCart) (catalog: Catalog): Result<float, UnknownProduct> =
-    cart.products
-    |> List.map (fun product -> Catalog.getPrice product.key catalog)  
+    cart.items
+    |> List.map (fun product -> (Catalog.getPrice product.productKey catalog))  
     |> Result.sequence
-    |> Result.map List.sum
+    |> Result.map (fun prices -> List.zip prices cart.items)
+    |> Result.map (List.sumBy (fun (price, item) -> price * item.quantity))
+    |> Result.map (fun total -> (floor (total * 100.0))/100.0)
