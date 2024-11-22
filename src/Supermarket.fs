@@ -21,4 +21,4 @@ module Supermarket =
     cart.products
     |> List.map (fun product -> Catalog.getPrice product.key catalog)  
     |> Result.sequence
-    |> Result.map (fun prices -> List.sum prices)
+    |> Result.map List.sum
