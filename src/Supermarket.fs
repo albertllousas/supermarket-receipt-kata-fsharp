@@ -37,7 +37,7 @@ module Supermarket =
     
   let receipt (cart: ShoppingCart) (catalog: Catalog): Result<Receipt, UnknownProduct> =
     cart.items
-      |> List.map (fun product -> (Catalog.getPrice product.productKey catalog))  
+      |> List.map (fun item -> (Catalog.getPrice item.productKey catalog))  
       |> Result.sequence
       |> Result.map (fun prices -> List.zip prices cart.items)
       |> Result.map (List.map ( fun (price, item) -> createReceiptItem price item))
