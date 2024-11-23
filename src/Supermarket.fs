@@ -28,17 +28,19 @@ module Supermarket =
     | Units count -> float count
     | Kilograms weight -> weight
     
+  let private createReceiptItem price cartItem = {
+        description = cartItem.productKey
+        quantity = cartItem.quantity
+        price = price
+        amount = (toFloat cartItem.quantity * price) |> (fun total -> (floor (total * 100.0))/100.0)
+        }
+    
   let receipt (cart: ShoppingCart) (catalog: Catalog): Result<Receipt, UnknownProduct> =
     cart.items
       |> List.map (fun product -> (Catalog.getPrice product.productKey catalog))  
       |> Result.sequence
       |> Result.map (fun prices -> List.zip prices cart.items)
-      |> Result.map (List.map ( fun (price, item) -> {
-        description = item.productKey
-        quantity = item.quantity
-        price = price
-        amount = (toFloat item.quantity * price) |> (fun total -> (floor (total * 100.0))/100.0)
-        }))
+      |> Result.map (List.map ( fun (price, item) -> createReceiptItem price item))
       |> Result.map (fun lines -> { total = List.sumBy _.amount lines; lines = lines })
   
   let total (cart: ShoppingCart) (catalog: Catalog): Result<float, UnknownProduct> =
