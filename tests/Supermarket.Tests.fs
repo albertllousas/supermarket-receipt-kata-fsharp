@@ -5,7 +5,15 @@ open Supermarket
 
 let assertThat actual expected = Expect.equal expected actual ""
 
-let catalog = { prices = Map.ofList [ ("toothpaste", 0.69); ("toothbrush", 0.99); ("apples", 1.99) ] }
+let catalog = {
+  prices = Map.ofList [
+    ("toothpaste", 0.69)
+    ("toothbrush", 0.99)
+    ("apples", 1.99)
+    ("rice", 2.49)
+    ("cherry-tomatoes", 0.69)
+  ]
+}
 
 [<Tests>]
 let tests = testList "Supermarket tests" [
@@ -50,5 +58,29 @@ let tests = testList "Supermarket tests" [
     let result = Supermarket.total shoppingCart catalog
     
     assertThat result (Ok 2.98) 
+  }
+  
+  test "Should provide a receipt" {
+    let shoppingCart = {
+      items = [
+        { productKey = "apples"; quantity = Kilograms 1.5 };
+        { productKey = "toothbrush"; quantity = Units 1 }
+        { productKey = "rice"; quantity = Units 1 };
+        { productKey = "cherry-tomatoes"; quantity = Units 2 };
+      ]
+    }
+    
+    let result = Supermarket.receipt shoppingCart catalog
+    
+    let expectedReceipt = {
+      lines = [
+        { description = "apples"; quantity = Kilograms 1.5; price = 1.99; amount = 2.98 };
+        { description = "toothbrush"; quantity = Units 1; price = 0.99; amount = 0.99 };
+        { description = "rice"; quantity = Units 1; price = 2.49; amount = 2.49 };
+        { description = "cherry-tomatoes"; quantity = Units 2; price = 0.69; amount = 1.38 };
+      ];
+      total = 7.84
+    }
+    assertThat result (Ok expectedReceipt) 
   }
 ]
