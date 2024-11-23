@@ -19,7 +19,7 @@ let tests = testList "Supermarket tests" [
   }
   
   test "Should calculate the total of a shopping cart with one product" {
-    let shoppingCart = { items = [ { productKey = "toothbrush"; quantity = 1 } ]}
+    let shoppingCart = { items = [ { productKey = "toothbrush"; quantity = Units 1 } ]}
     
     let result = Supermarket.total shoppingCart catalog
     
@@ -28,7 +28,7 @@ let tests = testList "Supermarket tests" [
   
   test "Should calculate the total of a shopping cart with some products" {
     let shoppingCart = { items = [
-      { productKey = "toothbrush"; quantity = 1 }; { productKey = "toothpaste"; quantity = 1 }
+      { productKey = "toothbrush"; quantity = Units 1 }; { productKey = "toothpaste"; quantity = Units 1 }
       ]}
     
     let result = Supermarket.total shoppingCart catalog
@@ -37,7 +37,7 @@ let tests = testList "Supermarket tests" [
   }
   
   test "Should fail calculating the total of a shopping cart with an unknown product" {
-    let shoppingCart = { items = [ { productKey = "unknown-product"; quantity = 1 } ]}
+    let shoppingCart = { items = [ { productKey = "unknown-product"; quantity = Units 1 } ]}
     
     let result = Supermarket.total shoppingCart catalog
     
@@ -45,7 +45,7 @@ let tests = testList "Supermarket tests" [
   }
   
   test "Should calculate the total of a shopping cart priced by the kilogram" {
-    let shoppingCart = { items = [ { productKey = "apples"; quantity = 1.5 } ]}
+    let shoppingCart = { items = [ { productKey = "apples"; quantity = Kilograms 1.5 } ]}
     
     let result = Supermarket.total shoppingCart catalog
     
