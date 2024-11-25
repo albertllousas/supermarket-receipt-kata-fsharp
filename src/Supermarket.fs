@@ -2,24 +2,30 @@ module Supermarket
 
 open FSharpx
 
-type Quantity = Units of int | Kilograms of float
+module Types =
 
-type CartItem = { productKey: string; quantity: Quantity }
+  type Quantity = Units of int | Kilograms of float
 
-type ShoppingCart = { items: CartItem list }
+  type CartItem = { productKey: string; quantity: Quantity }
 
-type ReceiptLine = { description: string; quantity: Quantity; price: float; amount: float }
+  type ShoppingCart = { items: CartItem list }
 
-type Receipt = { total: float; lines: ReceiptLine list }
- 
-type UnknownProduct = UnknownProduct of string
+  type ReceiptLine = { description: string; quantity: Quantity; price: float; amount: float }
 
-type GetPrice = string -> Result<float, UnknownProduct> 
+  type Receipt = { total: float; lines: ReceiptLine list }
+   
+  type UnknownProduct = UnknownProduct of string
+
+  type GetPrice = string -> Result<float, UnknownProduct>
   
-let getPriceFromMap (catalog: Map<string, float>) : GetPrice = fun key ->
-    match Map.tryFind key catalog with | Some price -> Ok price | None -> Error(UnknownProduct key)
+module Defaults =
+  open Types
+    
+  let getPriceFromMap (catalog: Map<string, float>) : GetPrice = fun key ->
+      match Map.tryFind key catalog with | Some price -> Ok price | None -> Error(UnknownProduct key)
 
-module Supermarket =
+module Receipt =
+  open Types
 
   let private toFloat quantity =
     match quantity with Units count -> float count | Kilograms weight -> weight
@@ -31,7 +37,7 @@ module Supermarket =
     amount = (toFloat cartItem.quantity * price) |> (fun total -> (floor (total * 100.0))/100.0)
     }  
       
-  let receipt (cart: ShoppingCart) (findPrice: GetPrice): Result<Receipt, UnknownProduct> =
+  let provide (cart: ShoppingCart) (findPrice: GetPrice): Result<Receipt, UnknownProduct> =
     cart.items
       |> List.map (fun item -> (findPrice item.productKey))  
       |> Result.sequence
@@ -40,5 +46,5 @@ module Supermarket =
       |> Result.map (fun lines  -> { lines = lines; total = List.sum (lines |> List.map _.amount) })
   
   let total (cart: ShoppingCart) (findPrice: GetPrice): Result<float, UnknownProduct> =
-    receipt cart findPrice |> Result.map _.total
+    provide cart findPrice |> Result.map _.total
   

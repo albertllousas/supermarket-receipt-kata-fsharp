@@ -1,6 +1,8 @@
 module SupermarketTests
 
 open Expecto
+open Supermarket.Types
+open Supermarket.Defaults
 open Supermarket
 
 let assertThat actual expected = Expect.equal expected actual ""
@@ -20,7 +22,7 @@ let tests = testList "Supermarket tests" [
   test "Should calculate the total of an empty shopping cart" {
     let shoppingCart = { items = []}
     
-    let result = Supermarket.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice 
     
     assertThat result (Ok 0.0)  
   }
@@ -28,7 +30,7 @@ let tests = testList "Supermarket tests" [
   test "Should calculate the total of a shopping cart with one product" {
     let shoppingCart = { items = [ { productKey = "toothbrush"; quantity = Units 1 } ]}
     
-    let result = Supermarket.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice 
     
     assertThat result (Ok 0.99)  
   }
@@ -38,7 +40,7 @@ let tests = testList "Supermarket tests" [
       { productKey = "toothbrush"; quantity = Units 1 }; { productKey = "toothpaste"; quantity = Units 1 }
       ]}
     
-    let result = Supermarket.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice 
     
     assertThat result (Ok 1.68) 
   }
@@ -46,7 +48,7 @@ let tests = testList "Supermarket tests" [
   test "Should fail calculating the total of a shopping cart with an unknown product" {
     let shoppingCart = { items = [ { productKey = "unknown-product"; quantity = Units 1 } ]}
     
-    let result = Supermarket.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice 
     
     assertThat result (Error (UnknownProduct "unknown-product"))  
   }
@@ -54,7 +56,7 @@ let tests = testList "Supermarket tests" [
   test "Should calculate the total of a shopping cart priced by the kilogram" {
     let shoppingCart = { items = [ { productKey = "apples"; quantity = Kilograms 1.5 } ]}
     
-    let result = Supermarket.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice 
     
     assertThat result (Ok 2.98) 
   }
@@ -69,7 +71,7 @@ let tests = testList "Supermarket tests" [
       ]
     }
     
-    let result = Supermarket.receipt shoppingCart getPrice 
+    let result = Receipt.provide shoppingCart getPrice 
     
     let expectedReceipt = {
       lines = [
