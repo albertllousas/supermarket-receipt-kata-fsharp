@@ -45,7 +45,7 @@ module Discounts =
   
   let private createDiscountLine line discount amount = { product = line.description; discount = discount; amount = amount }
   
-  let checkDiscount discount line =
+  let private checkDiscount discount line =
     let units = match line.quantity with Units x -> x | Kilograms x -> int x
     match discount with
       | BuyOneGetOneFree -> if units > 1 then Some (createDiscountLine line discount (applyBuyOneGetOneFree line)) else None
