@@ -38,18 +38,17 @@ module Discounts =
   open Types
   open Defaults
   
-  let applyBuyOneGetOneFree item =
-    let freeItems = int  (toFloat item.quantity) / 2 
-    let paidItems = int(toFloat item.quantity) - freeItems
-    (float paidItems) * item.price 
+  let private applyBuyOneGetOneFree receiptLine =
+    let freeItems = int (toFloat receiptLine.quantity) / 2 
+    let paidItems = int (toFloat receiptLine.quantity) - freeItems
+    (float paidItems) * receiptLine.price 
+  
+  let private createDiscountLine line discount amount = { product = line.description; discount = discount; amount = amount }
   
   let checkDiscount discount line =
     let units = match line.quantity with Units x -> x | Kilograms x -> int x
     match discount with
-      | BuyOneGetOneFree ->
-        if units > 1
-        then Some { product = line.description; discount = discount; amount = applyBuyOneGetOneFree line }
-        else None
+      | BuyOneGetOneFree -> if units > 1 then Some (createDiscountLine line discount (applyBuyOneGetOneFree line)) else None
       
   let apply receipt findDiscount =
     receipt.lines
