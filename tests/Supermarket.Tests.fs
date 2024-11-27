@@ -16,13 +16,15 @@ let getPrice = getPriceFromMap (Map.ofList [
   ]
 )
 
+let findDiscount = findDiscountFromMap (Map.ofList [] )
+
 [<Tests>]
 let tests = testList "Supermarket tests" [
 
   test "Should calculate the total of an empty shopping cart" {
     let shoppingCart = { items = []}
     
-    let result = Receipt.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice findDiscount
     
     assertThat result (Ok 0.0)  
   }
@@ -30,7 +32,7 @@ let tests = testList "Supermarket tests" [
   test "Should calculate the total of a shopping cart with one product" {
     let shoppingCart = { items = [ { productKey = "toothbrush"; quantity = Units 1 } ]}
     
-    let result = Receipt.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice findDiscount
     
     assertThat result (Ok 0.99)  
   }
@@ -40,7 +42,7 @@ let tests = testList "Supermarket tests" [
       { productKey = "toothbrush"; quantity = Units 1 }; { productKey = "toothpaste"; quantity = Units 1 }
       ]}
     
-    let result = Receipt.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice findDiscount
     
     assertThat result (Ok 1.68) 
   }
@@ -48,7 +50,7 @@ let tests = testList "Supermarket tests" [
   test "Should fail calculating the total of a shopping cart with an unknown product" {
     let shoppingCart = { items = [ { productKey = "unknown-product"; quantity = Units 1 } ]}
     
-    let result = Receipt.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice findDiscount
     
     assertThat result (Error (UnknownProduct "unknown-product"))  
   }
@@ -56,7 +58,7 @@ let tests = testList "Supermarket tests" [
   test "Should calculate the total of a shopping cart priced by the kilogram" {
     let shoppingCart = { items = [ { productKey = "apples"; quantity = Kilograms 1.5 } ]}
     
-    let result = Receipt.total shoppingCart getPrice 
+    let result = Receipt.total shoppingCart getPrice findDiscount
     
     assertThat result (Ok 2.98) 
   }
@@ -71,7 +73,7 @@ let tests = testList "Supermarket tests" [
       ]
     }
     
-    let result = Receipt.provide shoppingCart getPrice 
+    let result = Receipt.provide shoppingCart getPrice findDiscount
     
     let expectedReceipt = {
       lines = [
@@ -79,8 +81,23 @@ let tests = testList "Supermarket tests" [
         { description = "toothbrush";       quantity = Units 1;       price = 0.99; amount = 0.99 };
         { description = "rice";             quantity = Units 1;       price = 2.49; amount = 2.49 };
         { description = "cherry-tomatoes";  quantity = Units 2;       price = 0.69; amount = 1.38 };
-      ];
+      ]
+      discounts = []
       total = 7.84
+    }
+    assertThat result (Ok expectedReceipt) 
+  }
+  
+  test "Should run a special deal: buy two toothbrushes, get one free." {
+    let shoppingCart = { items = [ { productKey = "toothbrush"; quantity = Units 2 } ]}
+    let findDiscount = findDiscountFromMap (Map.ofList [ ("toothbrush", BuyOneGetOneFree) ])
+    
+    let result = Receipt.provide shoppingCart getPrice findDiscount
+    
+    let expectedReceipt = {
+      lines = [ { description = "toothbrush"; quantity = Units 2; price = 0.99; amount = 1.98 } ]
+      discounts = [ { product = "toothbrush"; discount = BuyOneGetOneFree; amount = 0.99 } ]
+      total = 0.99
     }
     assertThat result (Ok expectedReceipt) 
   }
