@@ -101,4 +101,18 @@ let tests = testList "Supermarket tests" [
     }
     assertThat result (Ok expectedReceipt) 
   }
+  
+  test "Should run a special deal: 20% discount on apples, normal price €1.99 per kilo." {
+    let shoppingCart = { items = [ { productKey = "apples"; quantity = Kilograms 1.5 } ]}
+    let findDiscount = findDiscountFromMap (Map.ofList [ ("apples", Percentage 20 ) ])
+    
+    let result = Receipt.provide shoppingCart getPrice findDiscount
+    
+    let expectedReceipt = {
+      lines = [ { description = "apples"; quantity = Kilograms 1.5; price = 1.99; amount = 2.98 } ]
+      discounts = [ { product = "apples"; discount = Percentage 20; amount = 0.59 } ]
+      total = 2.39
+    }
+    assertThat result (Ok expectedReceipt) 
+  }
 ]

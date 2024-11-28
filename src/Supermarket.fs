@@ -10,7 +10,7 @@ module Types =
 
   type ShoppingCart = { items: CartItem list }
   
-  type Discount = BuyOneGetOneFree
+  type Discount = BuyOneGetOneFree | Percentage of int
 
   type DiscountLine = { product: string; discount: Discount; amount: float }
   
@@ -27,6 +27,8 @@ module Types =
 module Defaults =
   open Types
   
+  let round (value: float) = (floor (value * 100.0))/100.0
+  
   let toFloat quantity = match quantity with Units count -> float count | Kilograms weight -> weight
     
   let getPriceFromMap (catalog: Map<string, float>) : GetPrice = fun key ->
@@ -41,14 +43,17 @@ module Discounts =
   let private applyBuyOneGetOneFree receiptLine =
     let freeItems = int (toFloat receiptLine.quantity) / 2 
     let paidItems = int (toFloat receiptLine.quantity) - freeItems
-    (float paidItems) * receiptLine.price 
+    (float paidItems) * receiptLine.price
+    
+  let private applyPercentage percentatge amount = amount * (float percentatge) / 100.0
   
   let private createDiscountLine line discount amount = { product = line.description; discount = discount; amount = amount }
   
   let private checkDiscount discount line =
-    let units = match line.quantity with Units x -> x | Kilograms x -> int x
+    let units = match line.quantity with Units x -> x | Kilograms _ -> 0
     match discount with
       | BuyOneGetOneFree -> if units > 1 then Some (createDiscountLine line discount (applyBuyOneGetOneFree line)) else None
+      | Percentage percentage -> Some (createDiscountLine line discount (round (applyPercentage percentage line.amount)))
       
   let apply receipt findDiscount =
     receipt.lines
@@ -66,7 +71,7 @@ module Receipt =
     description = cartItem.productKey
     quantity = cartItem.quantity
     price = price
-    amount = (toFloat cartItem.quantity * price) |> (fun total -> (floor (total * 100.0))/100.0)
+    amount = (toFloat cartItem.quantity * price) |> round
     }  
       
   let provide (cart: ShoppingCart) (findPrice: GetPrice) (findDiscount: FindDiscount): Result<Receipt, UnknownProduct> =
