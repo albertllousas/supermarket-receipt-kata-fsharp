@@ -8,7 +8,7 @@ open Supermarket
 let assertThat actual expected = Expect.equal expected actual ""
 
 let getPrice = getPriceFromMap (Map.ofList [
-    ("toothpaste", 0.69)
+    ("toothpaste", 1.79)
     ("toothbrush", 0.99)
     ("apples", 1.99)
     ("rice", 2.49)
@@ -44,7 +44,7 @@ let tests = testList "Supermarket tests" [
     
     let result = Receipt.total shoppingCart getPrice findDiscount
     
-    assertThat result (Ok 1.68) 
+    assertThat result (Ok 2.78) 
   }
   
   test "Should fail calculating the total of a shopping cart with an unknown product" {
@@ -112,6 +112,20 @@ let tests = testList "Supermarket tests" [
       lines = [ { description = "apples"; quantity = Kilograms 1.5; price = 1.99; amount = 2.98 } ]
       discounts = [ { product = "apples"; discount = Percentage 20; amount = 0.59 } ]
       total = 2.39
+    }
+    assertThat result (Ok expectedReceipt) 
+  }
+  
+  test "Should run a special deal: five tubes of toothpaste for €7.49." {
+    let shoppingCart = { items = [ { productKey = "toothpaste"; quantity = Units 6 } ]}
+    let findDiscount = findDiscountFromMap (Map.ofList [ ("toothpaste", FixedPriceForQuantity (7.49, 5)) ])
+    
+    let result = Receipt.provide shoppingCart getPrice findDiscount
+    
+    let expectedReceipt = {
+      lines = [ { description = "toothpaste"; quantity = Units 6; price = 1.79; amount = 10.74 } ]
+      discounts = [ { product = "toothpaste"; discount = FixedPriceForQuantity (7.49, 5); amount = 1.45 } ]
+      total = 9.29
     }
     assertThat result (Ok expectedReceipt) 
   }

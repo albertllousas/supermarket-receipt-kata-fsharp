@@ -10,7 +10,7 @@ module Types =
 
   type ShoppingCart = { items: CartItem list }
   
-  type Discount = BuyOneGetOneFree | Percentage of int
+  type Discount = BuyOneGetOneFree | Percentage of int | FixedPriceForQuantity of price:float * offerUnits:int 
 
   type DiscountLine = { product: string; discount: Discount; amount: float }
   
@@ -26,6 +26,7 @@ module Types =
   
 module Defaults =
   open Types
+  open System
   
   let round (value: float) = (floor (value * 100.0))/100.0
   
@@ -47,13 +48,27 @@ module Discounts =
     
   let private applyPercentage percentatge amount = amount * (float percentatge) / 100.0
   
+  let private applyFixedPrice4Quantity (offerPrice:float) (offerUnits:int) (price:float) (units: int) =
+    let totalNormalPrice = round (float units * price)
+    let discountedPrice = 
+      let discountedUnitsPrice = float (units / offerUnits) * offerPrice
+      let normalRemainingPrice = float (units % offerUnits) * price
+      discountedUnitsPrice + normalRemainingPrice
+    totalNormalPrice - discountedPrice
+  
   let private createDiscountLine line discount amount = { product = line.description; discount = discount; amount = amount }
   
   let private checkDiscount discount line =
     let units = match line.quantity with Units x -> x | Kilograms _ -> 0
     match discount with
-      | BuyOneGetOneFree -> if units > 1 then Some (createDiscountLine line discount (applyBuyOneGetOneFree line)) else None
-      | Percentage percentage -> Some (createDiscountLine line discount (round (applyPercentage percentage line.amount)))
+      | BuyOneGetOneFree ->
+        if units > 1 then Some (createDiscountLine line discount (applyBuyOneGetOneFree line)) else None
+      | Percentage percentage ->
+        Some (createDiscountLine line discount (round (applyPercentage percentage line.amount)))
+      | FixedPriceForQuantity (price, quantity) ->
+        if units >= quantity
+        then Some (createDiscountLine line discount (round (applyFixedPrice4Quantity price quantity line.price units)))
+        else None
       
   let apply receipt findDiscount =
     receipt.lines
@@ -61,7 +76,7 @@ module Discounts =
       |> List.choose id
       |> List.map (fun (discount, line) -> checkDiscount discount line)
       |> List.choose id
-      |> (fun discounts -> { receipt with discounts = discounts; total = receipt.total - List.sum (discounts |> List.map _.amount) } )
+      |> (fun discounts -> { receipt with discounts = discounts; total = round (receipt.total - List.sum (discounts |> List.map _.amount)) } )
     
 module Receipt =
   open Types
